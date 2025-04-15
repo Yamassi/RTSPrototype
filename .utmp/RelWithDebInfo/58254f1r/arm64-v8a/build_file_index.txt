@@ -1,0 +1,2 @@
+/Users/yamassi/GameDev/Personal/RTSPrototype/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/CMakeLists.txt
+/Users/yamassi/GameDev/Personal/RTSPrototype/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/GameActivity/CMakeLists.txt

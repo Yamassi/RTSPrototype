@@ -18,6 +18,10 @@ namespace Rts
         private const float ScreenMoveSpeed = 10f;
 
         private CompositeDisposable _disposable = new CompositeDisposable();
+        private float _minX = -3;
+        private float _maxX= 3;
+        private float _minZ= -12;
+        private float _maxZ= -1;
 
         public InputController(Player player)
         {
@@ -72,10 +76,20 @@ namespace Rts
                 Vector3 right = _camera.transform.right;
                 Vector3 forward = Vector3.Cross(right, Vector3.up);
 
-                Vector3 move = (right * input.x + forward * input.y).normalized;
-                move *= moveSpeed * Time.deltaTime;
+                Vector3 move = (right * input.x + forward * input.y).normalized * moveSpeed * Time.deltaTime;
+                Vector3 newPosition = _camera.transform.position + move;
+                
+                Vector3 isoPos = new Vector3(
+                    Vector3.Dot(newPosition, right),
+                    Vector3.Dot(newPosition, forward)
+                );
+                
+                isoPos.x = Mathf.Clamp(isoPos.x, _minX, _maxX);
+                isoPos.y = Mathf.Clamp(isoPos.y, _minZ, _maxZ);
 
-                _camera.transform.position += move;
+                newPosition = right * isoPos.x + forward * isoPos.y + Vector3.up * newPosition.y;
+
+                _camera.transform.position = newPosition;
             }).AddTo(_disposable);
         }
 
