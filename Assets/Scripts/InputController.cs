@@ -16,7 +16,7 @@ namespace Rts
 
         private const int MaxHitDistance = 100;
         private const float ScreenMoveSpeed = 10f;
-        private const float HoldThreshold = 0.1f;
+        private const float HoldThreshold = 0.2f;
 
         private CompositeDisposable _disposable = new CompositeDisposable();
         private float _minX = -3;
@@ -24,6 +24,7 @@ namespace Rts
         private float _minZ = -12;
         private float _maxZ = -1;
         private float _clickStartTime;
+        private bool _isHold;
 
 
         public InputController(Player player)
@@ -40,7 +41,10 @@ namespace Rts
             _input.Rts.Click.canceled += EndSelect;
             _input.Rts.Move.performed += MoveScreen;
             _input.Rts.Move.canceled += CancelMoveScreen;
+
             _camera = Camera.main;
+
+            _isHold = false;
 
             MoveScreen();
         }
@@ -56,9 +60,6 @@ namespace Rts
             _disposable.Dispose();
         }
 
-        private void CancelMoveScreen(InputAction.CallbackContext context) => _screenMoveInput = Vector2.zero;
-
-
         private void MoveScreen()
         {
             var touchSpeedMultiplier = 0.5f;
@@ -68,16 +69,13 @@ namespace Rts
                 if (IsPointerOverUI())
                     return;
 
+                if (!_isHold)
+                    return;
+
                 Vector2 input = _screenMoveInput;
                 float moveSpeed = ScreenMoveSpeed;
 
-#if UNITY_ANDROID || UNITY_IOS
-                if (Touchscreen.current != null)
-                {
-                    input *= reverseInputMultiplier;
-                    moveSpeed *= touchSpeedMultiplier;
-                }
-#endif
+                input *= reverseInputMultiplier;
 
                 Vector3 right = _camera.transform.right;
                 Vector3 forward = Vector3.Cross(right, Vector3.up);
@@ -99,14 +97,21 @@ namespace Rts
             }).AddTo(_disposable);
         }
 
+        private void CancelMoveScreen(InputAction.CallbackContext context) =>
+            _screenMoveInput = Vector2.zero;
+
         private void MoveScreen(InputAction.CallbackContext context) =>
             _screenMoveInput = context.ReadValue<Vector2>();
 
-        private void StartSelect(InputAction.CallbackContext context) => 
+        private void StartSelect(InputAction.CallbackContext context)
+        {
+            _isHold = true;
             _clickStartTime = Time.time;
+        }
 
         private async void EndSelect(InputAction.CallbackContext context)
         {
+            _isHold = false;
             float holdTime = Time.time - _clickStartTime;
             if (holdTime > HoldThreshold)
                 return;
@@ -116,7 +121,8 @@ namespace Rts
             if (IsPointerOverUI())
                 return;
 
-            var hitPosition = _input.Rts.Position.ReadValue<Vector2>();
+            Vector2 hitPosition;
+            hitPosition = _input.Rts.Position.ReadValue<Vector2>();
 
             if (hitPosition == Vector2.zero)
                 return;
@@ -137,14 +143,7 @@ namespace Rts
 
         bool IsPointerOverUI()
         {
-#if UNITY_EDITOR || UNITY_STANDALONE
             return EventSystem.current.IsPointerOverGameObject();
-#elif UNITY_ANDROID || UNITY_IOS
-            if (Input.touchCount > 0)
-                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
-            else
-                return false;
-#endif
         }
     }
 }
