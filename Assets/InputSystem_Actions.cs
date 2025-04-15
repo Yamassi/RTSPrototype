@@ -34,7 +34,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": false
+                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""Position"",
@@ -44,27 +44,36 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""729a3c39-f3a8-423c-b9f6-fd74e715453a"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""92307a3a-ea3b-4314-a936-dea7d1514d79"",
-                    ""path"": ""<Mouse>/leftButton"",
+                    ""id"": ""e74123a9-ff81-4fa9-bd0c-35ce0b2647ac"",
+                    ""path"": ""<Touchscreen>/Press"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
+                    ""groups"": "";Touch"",
                     ""action"": ""Click"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""e74123a9-ff81-4fa9-bd0c-35ce0b2647ac"",
-                    ""path"": ""<Touchscreen>/touch*/Press"",
+                    ""id"": ""6d915e8f-abd0-4e06-a2d5-0ed3c9f346e9"",
+                    ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Touch"",
+                    ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Click"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -82,12 +91,78 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""8366bbb1-7f16-4fec-8974-5ddc93f9c5ef"",
+                    ""id"": ""77beb863-e6ef-4481-b31d-c4dd9f0f2963"",
                     ""path"": ""<Mouse>/position"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Position"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""Keyboard"",
+                    ""id"": ""1b4dd3de-37b4-4a0f-af16-b171f6989480"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""fdd2862a-dc52-47c5-b476-56b0b6a103e5"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""3ad7dd21-bad2-473f-af8f-9899c9fda5f7"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""a8ba9e02-69dc-4d7f-a3b1-831b59263068"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""f9e8f985-99a3-4d9a-945f-137b5a8e5416"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""655d5696-895e-46f3-9087-04e7aeeb6a8e"",
+                    ""path"": ""<Touchscreen>/delta"",
+                    ""interactions"": ""Press"",
+                    ""processors"": ""NormalizeVector2"",
+                    ""groups"": "";Touch"",
+                    ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -161,6 +236,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Rts = asset.FindActionMap("Rts", throwIfNotFound: true);
         m_Rts_Click = m_Rts.FindAction("Click", throwIfNotFound: true);
         m_Rts_Position = m_Rts.FindAction("Position", throwIfNotFound: true);
+        m_Rts_Move = m_Rts.FindAction("Move", throwIfNotFound: true);
     }
 
     ~@InputSystem_Actions()
@@ -229,12 +305,14 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private List<IRtsActions> m_RtsActionsCallbackInterfaces = new List<IRtsActions>();
     private readonly InputAction m_Rts_Click;
     private readonly InputAction m_Rts_Position;
+    private readonly InputAction m_Rts_Move;
     public struct RtsActions
     {
         private @InputSystem_Actions m_Wrapper;
         public RtsActions(@InputSystem_Actions wrapper) { m_Wrapper = wrapper; }
         public InputAction @Click => m_Wrapper.m_Rts_Click;
         public InputAction @Position => m_Wrapper.m_Rts_Position;
+        public InputAction @Move => m_Wrapper.m_Rts_Move;
         public InputActionMap Get() { return m_Wrapper.m_Rts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -250,6 +328,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Position.started += instance.OnPosition;
             @Position.performed += instance.OnPosition;
             @Position.canceled += instance.OnPosition;
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
         }
 
         private void UnregisterCallbacks(IRtsActions instance)
@@ -260,6 +341,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Position.started -= instance.OnPosition;
             @Position.performed -= instance.OnPosition;
             @Position.canceled -= instance.OnPosition;
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
         }
 
         public void RemoveCallbacks(IRtsActions instance)
@@ -326,5 +410,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     {
         void OnClick(InputAction.CallbackContext context);
         void OnPosition(InputAction.CallbackContext context);
+        void OnMove(InputAction.CallbackContext context);
     }
 }
