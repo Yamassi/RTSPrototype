@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Rts
 {
-    public class Game : MonoBehaviour
+    public class Building : MonoBehaviour
     {
         
     }
