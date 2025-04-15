@@ -25,12 +25,14 @@ namespace Rts
 
         public void Show(string resource, string value)
         {
+            gameObject.SetActive(true);
             _resourceValue.text = $"{resource} - {value}";
             _sequence?.Kill();
             _sequence = DOTween.Sequence()
                 .Append(_canvasGroup.DOFade(1, FadeDuration))
                 .AppendInterval(DisplayDuration)
-                .Append(_canvasGroup.DOFade(0, FadeDuration));
+                .Append(_canvasGroup.DOFade(0, FadeDuration))
+                .OnComplete(()=>gameObject.SetActive(false));
         }
 
         private void Reset() => _canvasGroup.alpha = 0;

@@ -1,6 +1,8 @@
 using System;
+using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Rts
@@ -45,10 +47,7 @@ namespace Rts
             _disposable.Dispose();
         }
 
-        private void CancelMoveScreen(InputAction.CallbackContext obj)
-        {
-            _screenMoveInput = Vector2.zero;
-        }
+        private void CancelMoveScreen(InputAction.CallbackContext context) => _screenMoveInput = Vector2.zero;
 
         private void MoveScreen()
         {
@@ -56,6 +55,9 @@ namespace Rts
             var reverseInputMultiplier = -1f;
             Observable.EveryUpdate().Subscribe(_ =>
             {
+                if (IsPointerOverUI())
+                    return;
+
                 Vector2 input = _screenMoveInput;
                 float moveSpeed = ScreenMoveSpeed;
 
@@ -80,14 +82,22 @@ namespace Rts
         private void MoveScreen(InputAction.CallbackContext context) =>
             _screenMoveInput = context.ReadValue<Vector2>();
 
-        private void Select(InputAction.CallbackContext context)
+        private async void Select(InputAction.CallbackContext context)
         {
+            if (Input.touchCount > 1)
+                return;
+
+            await UniTask.WaitForEndOfFrame();
+
+            if (IsPointerOverUI())
+            {
+                Debug.Log("IsPointerOverGameObject.");
+                return;
+            }
+
             var hitPosition = _input.Rts.Position.ReadValue<Vector2>();
 
             if (hitPosition == Vector2.zero)
-                return;
-
-            if (Input.touchCount > 1)
                 return;
 
             Ray ray = Camera.main.ScreenPointToRay(hitPosition);
@@ -102,6 +112,18 @@ namespace Rts
 
                 _player.MoveToDirection(direction);
             }
+        }
+
+        bool IsPointerOverUI()
+        {
+#if UNITY_EDITOR || UNITY_STANDALONE
+            return EventSystem.current.IsPointerOverGameObject();
+#elif UNITY_ANDROID || UNITY_IOS
+            if (Input.touchCount > 0)
+                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            else
+                return false;
+#endif
         }
     }
 }
