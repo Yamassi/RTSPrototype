@@ -16,12 +16,15 @@ namespace Rts
 
         private const int MaxHitDistance = 100;
         private const float ScreenMoveSpeed = 10f;
+        private const float HoldThreshold = 0.1f;
 
         private CompositeDisposable _disposable = new CompositeDisposable();
         private float _minX = -3;
-        private float _maxX= 3;
-        private float _minZ= -12;
-        private float _maxZ= -1;
+        private float _maxX = 3;
+        private float _minZ = -12;
+        private float _maxZ = -1;
+        private float _clickStartTime;
+
 
         public InputController(Player player)
         {
@@ -33,7 +36,8 @@ namespace Rts
         {
             _input.Enable();
 
-            _input.Rts.Click.performed += Select;
+            _input.Rts.Click.started += StartSelect;
+            _input.Rts.Click.canceled += EndSelect;
             _input.Rts.Move.performed += MoveScreen;
             _input.Rts.Move.canceled += CancelMoveScreen;
             _camera = Camera.main;
@@ -43,7 +47,8 @@ namespace Rts
 
         public void Dispose()
         {
-            _input.Rts.Click.performed -= Select;
+            _input.Rts.Click.started -= StartSelect;
+            _input.Rts.Click.canceled -= EndSelect;
             _input.Rts.Move.performed -= MoveScreen;
             _input.Rts.Move.canceled -= CancelMoveScreen;
             _input.Dispose();
@@ -53,9 +58,10 @@ namespace Rts
 
         private void CancelMoveScreen(InputAction.CallbackContext context) => _screenMoveInput = Vector2.zero;
 
+
         private void MoveScreen()
         {
-            var touchSpeedMultiplier = 2f;
+            var touchSpeedMultiplier = 0.5f;
             var reverseInputMultiplier = -1f;
             Observable.EveryUpdate().Subscribe(_ =>
             {
@@ -78,12 +84,12 @@ namespace Rts
 
                 Vector3 move = (right * input.x + forward * input.y).normalized * moveSpeed * Time.deltaTime;
                 Vector3 newPosition = _camera.transform.position + move;
-                
+
                 Vector3 isoPos = new Vector3(
                     Vector3.Dot(newPosition, right),
                     Vector3.Dot(newPosition, forward)
                 );
-                
+
                 isoPos.x = Mathf.Clamp(isoPos.x, _minX, _maxX);
                 isoPos.y = Mathf.Clamp(isoPos.y, _minZ, _maxZ);
 
@@ -96,18 +102,19 @@ namespace Rts
         private void MoveScreen(InputAction.CallbackContext context) =>
             _screenMoveInput = context.ReadValue<Vector2>();
 
-        private async void Select(InputAction.CallbackContext context)
+        private void StartSelect(InputAction.CallbackContext context) => 
+            _clickStartTime = Time.time;
+
+        private async void EndSelect(InputAction.CallbackContext context)
         {
-            if (Input.touchCount > 1)
+            float holdTime = Time.time - _clickStartTime;
+            if (holdTime > HoldThreshold)
                 return;
 
             await UniTask.WaitForEndOfFrame();
 
             if (IsPointerOverUI())
-            {
-                Debug.Log("IsPointerOverGameObject.");
                 return;
-            }
 
             var hitPosition = _input.Rts.Position.ReadValue<Vector2>();
 
