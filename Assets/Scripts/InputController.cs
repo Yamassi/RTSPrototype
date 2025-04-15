@@ -1,13 +1,11 @@
-using System;
 using Cysharp.Threading.Tasks;
-using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Rts
 {
-    public class InputController : IDisposable
+    public class InputController : MonoBehaviour
     {
         private InputSystem_Actions _input;
         private Player _player;
@@ -15,10 +13,9 @@ namespace Rts
         private Vector2 _screenMoveInput;
 
         private const int MaxHitDistance = 100;
-        private const float ScreenMoveSpeed = 10f;
+        private float _screenMoveSpeed = 10f;
         private const float HoldThreshold = 0.2f;
 
-        private CompositeDisposable _disposable = new CompositeDisposable();
         private float _minX = -3;
         private float _maxX = 3;
         private float _minZ = -12;
@@ -26,15 +23,11 @@ namespace Rts
         private float _clickStartTime;
         private bool _isHold;
 
-
-        public InputController(Player player)
+        public void Initialize(Player player)
         {
             _player = player;
             _input = new InputSystem_Actions();
-        }
 
-        public void Initialize()
-        {
             _input.Enable();
 
             _input.Rts.Click.started += StartSelect;
@@ -45,56 +38,62 @@ namespace Rts
             _camera = Camera.main;
 
             _isHold = false;
+            
+            if (IsMobilePlatform())
+            {
+                var touchSpeedMultiplier = 0.5f;
+                _screenMoveSpeed *= touchSpeedMultiplier;
+            }
 
             MoveScreen();
         }
 
-        public void Dispose()
+        public void OnDestroy()
         {
             _input.Rts.Click.started -= StartSelect;
             _input.Rts.Click.canceled -= EndSelect;
             _input.Rts.Move.performed -= MoveScreen;
             _input.Rts.Move.canceled -= CancelMoveScreen;
             _input.Dispose();
+        }
 
-            _disposable.Dispose();
+        private void LateUpdate()
+        {
+            MoveScreen();
         }
 
         private void MoveScreen()
         {
-            var touchSpeedMultiplier = 0.5f;
             var reverseInputMultiplier = -1f;
-            Observable.EveryUpdate().Subscribe(_ =>
-            {
-                if (IsPointerOverUI())
-                    return;
 
-                if (!_isHold)
-                    return;
+            if (IsPointerOverUI())
+                return;
 
-                Vector2 input = _screenMoveInput;
-                float moveSpeed = ScreenMoveSpeed;
+            if (!_isHold)
+                return;
 
-                input *= reverseInputMultiplier;
+            Vector2 input = _screenMoveInput;
+            float moveSpeed = _screenMoveSpeed;
 
-                Vector3 right = _camera.transform.right;
-                Vector3 forward = Vector3.Cross(right, Vector3.up);
+            input *= reverseInputMultiplier;
 
-                Vector3 move = (right * input.x + forward * input.y).normalized * moveSpeed * Time.deltaTime;
-                Vector3 newPosition = _camera.transform.position + move;
+            Vector3 right = _camera.transform.right;
+            Vector3 forward = Vector3.Cross(right, Vector3.up);
 
-                Vector3 isoPos = new Vector3(
-                    Vector3.Dot(newPosition, right),
-                    Vector3.Dot(newPosition, forward)
-                );
+            Vector3 move = (right * input.x + forward * input.y).normalized * moveSpeed * Time.deltaTime;
+            Vector3 newPosition = _camera.transform.position + move;
 
-                isoPos.x = Mathf.Clamp(isoPos.x, _minX, _maxX);
-                isoPos.y = Mathf.Clamp(isoPos.y, _minZ, _maxZ);
+            Vector3 isoPos = new Vector3(
+                Vector3.Dot(newPosition, right),
+                Vector3.Dot(newPosition, forward)
+            );
 
-                newPosition = right * isoPos.x + forward * isoPos.y + Vector3.up * newPosition.y;
+            isoPos.x = Mathf.Clamp(isoPos.x, _minX, _maxX);
+            isoPos.y = Mathf.Clamp(isoPos.y, _minZ, _maxZ);
 
-                _camera.transform.position = newPosition;
-            }).AddTo(_disposable);
+            newPosition = right * isoPos.x + forward * isoPos.y + Vector3.up * newPosition.y;
+
+            _camera.transform.position = newPosition;
         }
 
         private void CancelMoveScreen(InputAction.CallbackContext context) =>
@@ -141,9 +140,12 @@ namespace Rts
             }
         }
 
-        bool IsPointerOverUI()
+        bool IsPointerOverUI() => EventSystem.current.IsPointerOverGameObject();
+
+        bool IsMobilePlatform()
         {
-            return EventSystem.current.IsPointerOverGameObject();
+            return Application.platform == RuntimePlatform.Android ||
+                   Application.platform == RuntimePlatform.IPhonePlayer;
         }
     }
 }
